@@ -191,239 +191,257 @@ export default function FamilyList() {
 
   return (
     <div className="vh-100 d-flex flex-column">
-      <AppNavbar />
-      <div className="d-flex flex-grow-1">
-        <Sidebar />
-        <main className="p-4 flex-grow-1 bg-light overflow-auto">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h2>Liste des Familles</h2>
-            <Button variant="primary" onClick={handleAddFamily}>
-              + Ajouter une famille
-            </Button>
+  <AppNavbar />
+  <div className="d-flex flex-grow-1">
+    <Sidebar />
+    <main className="p-4 flex-grow-1 bg-light overflow-auto">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Liste des Familles</h2>
+        <Button variant="primary" onClick={handleAddFamily}>
+          + Ajouter une famille
+        </Button>
+      </div>
+
+      {alert && (
+        <Alert variant={alert.type} onClose={() => setAlert(null)} dismissible>
+          {alert.message}
+        </Alert>
+      )}
+
+      {families.length === 0 && <p>Aucune famille enregistrée.</p>}
+
+      {families.map(family => (
+        <div key={family.id} className="mb-4 p-3 border rounded" style={{ borderColor: family.color }}>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              <h4 style={{ color: family.color }}>{family.name} ({family.origin || '-'})</h4>
+              <p className="mb-1 text-muted">
+                Père: {family.fatherName || '-'} | Mère: {family.motherName || '-'}
+              </p>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <div
+                style={{
+                  backgroundColor: family.color,
+                  width: '20px',
+                  height: '20px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                }}
+                title="Couleur"
+              />
+              <Button variant="outline-success" size="sm" onClick={() => handleAddMember(family.id)}>
+                + Ajouter membre
+              </Button>
+              <Button variant="outline-danger" size="sm" onClick={() => handleDeleteFamily(family.id)}>
+                Supprimer famille
+              </Button>
+            </div>
           </div>
 
-          {alert && (
-            <Alert variant={alert.type} onClose={() => setAlert(null)} dismissible>
-              {alert.message}
-            </Alert>
-          )}
-
-          {families.length === 0 && <p>Aucune famille enregistrée.</p>}
-
-          {families.map(family => (
-            <div key={family.id} className="mb-4 p-3 border rounded" style={{ borderColor: family.color }}>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                  <h4 style={{ color: family.color }}>{family.name} ({family.origin || '-'})</h4>
-                  <p className="mb-1 text-muted">
-                    Père: {family.fatherName || '-'} | Mère: {family.motherName || '-'}
-                  </p>
-                </div>
-                <div className="d-flex align-items-center gap-2">
-                  <div
-                    style={{
-                      backgroundColor: family.color,
-                      width: '20px',
-                      height: '20px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                    }}
-                    title="Couleur"
-                  />
-                  <Button variant="outline-success" size="sm" onClick={() => handleAddMember(family.id)}>
-                    + Ajouter membre
-                  </Button>
-                  <Button variant="outline-danger" size="sm" onClick={() => handleDeleteFamily(family.id)}>
-                    Supprimer famille
-                  </Button>
-                </div>
-              </div>
-
-              <Table striped bordered hover responsive>
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Décédé</th>
-                    <th>Actions</th>
+          <Table striped bordered hover responsive>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Décédé</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {family.members.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center">Aucun membre.</td>
+                </tr>
+              ) : (
+                family.members.map(member => (
+                  <tr key={member.id}>
+                    <td>{getMemberName(family, member)}</td>
+                    <td>{member.isDeceased ? 'Oui' : 'Non'}</td>
+                    <td>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleEditMember(family.id, member)}
+                      >
+                        Modifier
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleDeleteMember(family.id, member.id)}
+                      >
+                        Supprimer
+                      </Button>
+                      <Button
+                        variant="outline-success"
+                        size="sm"
+                        onClick={() => {
+                          const isFather = member.gender === 'male'; // adapte selon ta donnée sexe
+                          setCurrentFamilyId(family.id);
+                          setMemberForm({
+                            name: '',
+                            fatherId: isFather ? member.id : '',
+                            motherId: isFather ? '' : member.id,
+                            isDeceased: false,
+                          });
+                          setEditingMember(null); // mode ajout
+                          setShowMemberModal(true);
+                        }}
+                        title={`Ajouter un enfant de ${member.name}`}
+                      >
+                        + Enfant
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {family.members.length === 0 ? (
-                    <tr>
-                      <td colSpan="3" className="text-center">Aucun membre.</td>
-                    </tr>
-                  ) : (
-                    family.members.map(member => (
-                      <tr key={member.id}>
-                        <td>{getMemberName(family, member)}</td>
-                        <td>{member.isDeceased ? 'Oui' : 'Non'}</td>
-                        <td>
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            className="me-2"
-                            onClick={() => handleEditMember(family.id, member)}
-                          >
-                            Modifier
-                          </Button>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDeleteMember(family.id, member.id)}
-                          >
-                            Supprimer
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-            </div>
-          ))}
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
+      ))}
 
-          {/* Modal Famille */}
-          <Modal show={showFamilyModal} onHide={() => setShowFamilyModal(false)} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>{editingFamily ? 'Modifier une famille' : 'Ajouter une famille'}</Modal.Title>
-            </Modal.Header>
-            <Form onSubmit={handleSubmitFamily}>
-              <Modal.Body>
-                <Form.Group className="mb-3" controlId="familyName">
-                  <Form.Label>Nom de famille</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="name"
-                    value={familyForm.name}
-                    onChange={handleFamilyFormChange}
-                    required
-                    autoFocus
-                  />
-                </Form.Group>
+      {/* Modal Famille */}
+      <Modal show={showFamilyModal} onHide={() => setShowFamilyModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{editingFamily ? 'Modifier une famille' : 'Ajouter une famille'}</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSubmitFamily}>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="familyName">
+              <Form.Label>Nom de famille</Form.Label>
+              <Form.Control
+                type="text"
+                name="name"
+                value={familyForm.name}
+                onChange={handleFamilyFormChange}
+                required
+                autoFocus
+              />
+            </Form.Group>
 
-                <Form.Group className="mb-3" controlId="fatherName">
-                  <Form.Label>Nom du père</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="fatherName"
-                    value={familyForm.fatherName}
-                    onChange={handleFamilyFormChange}
-                  />
-                </Form.Group>
+            <Form.Group className="mb-3" controlId="fatherName">
+              <Form.Label>Nom du père</Form.Label>
+              <Form.Control
+                type="text"
+                name="fatherName"
+                value={familyForm.fatherName}
+                onChange={handleFamilyFormChange}
+              />
+            </Form.Group>
 
-                <Form.Group className="mb-3" controlId="motherName">
-                  <Form.Label>Nom de la mère</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="motherName"
-                    value={familyForm.motherName}
-                    onChange={handleFamilyFormChange}
-                  />
-                </Form.Group>
+            <Form.Group className="mb-3" controlId="motherName">
+              <Form.Label>Nom de la mère</Form.Label>
+              <Form.Control
+                type="text"
+                name="motherName"
+                value={familyForm.motherName}
+                onChange={handleFamilyFormChange}
+              />
+            </Form.Group>
 
-                <Form.Group className="mb-3" controlId="familyOrigin">
-                  <Form.Label>Pays d'origine</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="origin"
-                    value={familyForm.origin}
-                    onChange={handleFamilyFormChange}
-                  />
-                </Form.Group>
+            <Form.Group className="mb-3" controlId="familyOrigin">
+              <Form.Label>Pays d'origine</Form.Label>
+              <Form.Control
+                type="text"
+                name="origin"
+                value={familyForm.origin}
+                onChange={handleFamilyFormChange}
+              />
+            </Form.Group>
 
-                <Form.Group className="mb-3" controlId="familyColor">
-                  <Form.Label>Couleur</Form.Label>
-                  <Form.Control
-                    type="color"
-                    name="color"
-                    value={familyForm.color}
-                    onChange={handleFamilyFormChange}
-                  />
-                </Form.Group>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" onClick={() => setShowFamilyModal(false)}>Annuler</Button>
-                <Button variant="primary" type="submit">{editingFamily ? 'Modifier' : 'Ajouter'}</Button>
-              </Modal.Footer>
-            </Form>
-          </Modal>
+            <Form.Group className="mb-3" controlId="familyColor">
+              <Form.Label>Couleur</Form.Label>
+              <Form.Control
+                type="color"
+                name="color"
+                value={familyForm.color}
+                onChange={handleFamilyFormChange}
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowFamilyModal(false)}>Annuler</Button>
+            <Button variant="primary" type="submit">{editingFamily ? 'Modifier' : 'Ajouter'}</Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
 
-{/* Modal Membre */}
-<Modal show={showMemberModal} onHide={() => setShowMemberModal(false)} centered>
-  <Modal.Header closeButton>
-    <Modal.Title>{editingMember ? 'Modifier un membre' : 'Ajouter un membre'}</Modal.Title>
-    {/* Afficher la couleur de la famille pour plus de cohérence visuelle */}
-    {currentFamilyId && (
-      <div
-        style={{
-          width: 30,
-          height: 30,
-          backgroundColor: families.find(f => f.id === currentFamilyId)?.color || '#000',
-          marginLeft: 10,
-          borderRadius: 4,
-          border: '1px solid #333',
-        }}
-      />
-    )}
-  </Modal.Header>
-  <Form onSubmit={handleSubmitMember}>
-    <Modal.Body>
-      <Form.Group className="mb-3" controlId="memberName">
-        <Form.Label>Nom</Form.Label>
-        <Form.Control
-          type="text"
-          name="name"
-          value={memberForm.name}
-          onChange={handleMemberFormChange}
-          required
-          autoFocus
-        />
-      </Form.Group>
+      {/* Modal Membre */}
+      <Modal show={showMemberModal} onHide={() => setShowMemberModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{editingMember ? 'Modifier un membre' : 'Ajouter un membre'}</Modal.Title>
+          {currentFamilyId && (
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                backgroundColor: families.find(f => f.id === currentFamilyId)?.color || '#000',
+                marginLeft: 10,
+                borderRadius: 4,
+                border: '1px solid #333',
+              }}
+            />
+          )}
+        </Modal.Header>
+        <Form onSubmit={handleSubmitMember}>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="memberName">
+              <Form.Label>Nom</Form.Label>
+              <Form.Control
+                type="text"
+                name="name"
+                value={memberForm.name}
+                onChange={handleMemberFormChange}
+                required
+                autoFocus
+              />
+            </Form.Group>
 
-      <Form.Group className="mb-3" controlId="memberFather">
-        <Form.Label>Père</Form.Label>
-        <Form.Select name="fatherId" value={memberForm.fatherId} onChange={handleMemberFormChange}>
-          <option value="">-- Aucun --</option>
-          {families.find(f => f.id === currentFamilyId)?.members
-            .filter(m => !editingMember || m.id !== editingMember.id)
-            .map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-        </Form.Select>
-      </Form.Group>
+            <Form.Group className="mb-3" controlId="memberFather">
+              <Form.Label>Père</Form.Label>
+              <Form.Select name="fatherId" value={memberForm.fatherId} onChange={handleMemberFormChange}>
+                <option value="">-- Aucun --</option>
+                {families.find(f => f.id === currentFamilyId)?.members
+                  .filter(m => !editingMember || m.id !== editingMember.id)
+                  .map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+              </Form.Select>
+            </Form.Group>
 
-      <Form.Group className="mb-3" controlId="memberMother">
-        <Form.Label>Mère</Form.Label>
-        <Form.Select name="motherId" value={memberForm.motherId} onChange={handleMemberFormChange}>
-          <option value="">-- Aucun --</option>
-          {families.find(f => f.id === currentFamilyId)?.members
-            .filter(m => !editingMember || m.id !== editingMember.id)
-            .map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-        </Form.Select>
-      </Form.Group>
+            <Form.Group className="mb-3" controlId="memberMother">
+              <Form.Label>Mère</Form.Label>
+              <Form.Select name="motherId" value={memberForm.motherId} onChange={handleMemberFormChange}>
+                <option value="">-- Aucun --</option>
+                {families.find(f => f.id === currentFamilyId)?.members
+                  .filter(m => !editingMember || m.id !== editingMember.id)
+                  .map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+              </Form.Select>
+            </Form.Group>
 
-      <Form.Group className="mb-3" controlId="memberIsDeceased">
-        <Form.Check
-          type="checkbox"
-          label="Décédé"
-          name="isDeceased"
-          checked={memberForm.isDeceased}
-          onChange={handleMemberFormChange}
-        />
-      </Form.Group>
-    </Modal.Body>
-    <Modal.Footer>
-      <Button variant="secondary" onClick={() => setShowMemberModal(false)}>Annuler</Button>
-      <Button variant="primary" type="submit">{editingMember ? 'Modifier' : 'Ajouter'}</Button>
-    </Modal.Footer>
-  </Form>
-</Modal>
+            <Form.Group className="mb-3" controlId="memberIsDeceased">
+              <Form.Check
+                type="checkbox"
+                label="Décédé"
+                name="isDeceased"
+                checked={memberForm.isDeceased}
+                onChange={handleMemberFormChange}
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowMemberModal(false)}>Annuler</Button>
+            <Button variant="primary" type="submit">{editingMember ? 'Modifier' : 'Ajouter'}</Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+    </main>
+  </div>
+</div>
 
-
-        </main>
-      </div>
-    </div>
   );
 }
